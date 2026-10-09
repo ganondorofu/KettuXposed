@@ -14,6 +14,7 @@ import io.github.revenge.xposed.modules.appearance.SysColorsModule
 import io.github.revenge.xposed.modules.appearance.ThemesModule
 import io.github.revenge.xposed.modules.bridge.AdditionalBridgeMethodsModule
 import io.github.revenge.xposed.modules.bridge.BridgeModule
+import io.github.revenge.xposed.modules.bridge.ClipboardImageModule
 import io.github.revenge.xposed.modules.no_track.BlockCrashReportingModule
 import io.github.revenge.xposed.modules.no_track.BlockDeepLinksTrackingModule
 import kotlinx.coroutines.CompletableDeferred
@@ -39,6 +40,7 @@ class Main : Module(), IXposedHookLoadPackage, IXposedHookZygoteInit {
         HookScriptLoaderModule,
         BridgeModule,
         AdditionalBridgeMethodsModule,
+        ClipboardImageModule,
         PluginsModule(),
         UpdaterModule,
         FixResourcesModule,

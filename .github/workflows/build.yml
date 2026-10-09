@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Align and sign
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          keytool -genkeypair -keystore ci.jks -storepass android -keypass android \
+            -alias ci -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=ci"
+          "$BT/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks ci.jks --ks-pass pass:android --key-pass pass:android \
+            --out app-release.apk aligned.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app-release.apk
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest app-release.apk \
+            --title "latest" \
+            --notes "KettuXposed with kettu.clipboard.copyImage (commit ${GITHUB_SHA::7})"
